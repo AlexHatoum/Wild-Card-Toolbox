@@ -1,0 +1,1105 @@
+TwoOfClubs <- function(x, y) { 
+  A2 <- sqrt((x^2)+(y^2)) 
+  rA <- (x/A2) 
+  return(rA)
+}
+
+ThreeOfClubs <- function(x, y) {
+  r <- x*y
+  return(r)
+}
+
+AceOfHearts.parallel <- function(D, ZYG, MZ, DZ){
+  #length(unique(twi2$family))
+  column_names <- colnames(D)
+  Names1 <- column_names[grepl("1$", column_names)] #make 
+  Names2 <- column_names[grepl("2$", column_names)]
+  selDVs2 <- c(Names1, Names2)
+  #Names <- sub("1", "", Names1)
+  selDVs <- c()
+  ZYG1 <- ZYG
+  PValue <- NULL
+  mzData <- D[D[,ZYG] ==MZ, selDVs2]
+  dzData <- D[D[,ZYG] ==DZ, selDVs2]
+  as.data.frame(Answers <- c())
+  APath <- NULL
+  CPath <- NULL
+  EPath <- NULL
+  univariate <- NULL
+  Problem <- NULL
+  a <- NULL
+  Var <- NULL
+  APath <- NULL
+  CPath <- NULL
+  EPath <- NULL
+  estimates3 <- NULL
+  MzCor <- NULL
+  DzCor <- NULL
+  PV <- NULL
+  PvalueA <- NULL
+  PvalueC <- NULL
+  #length(Names1)
+  estimates3 <- foreach(i=1:length(Names1), .packages=c("umx", "data.table"), .combine='rbind') %dopar% {
+    #selDVs <- c(Names[i])
+    selDVs2 <- c(Names1[i], Names2[i])
+    withWarnings <- function(expr) {
+      myWarnings <- NULL
+      wHandler <- function(w) {
+        myWarnings <<- c(myWarnings, list(w))
+        invokeRestart("muffleWarning")
+      }
+      val <- withCallingHandlers(expr, warning = wHandler)
+      list(value = val, warnings = myWarnings)
+    } 
+    m1 <-  withWarnings(a <-umxACE(selDVs = selDVs2, dzData = dzData, mzData = mzData))
+    Modified <- umxModify(a, update="a_r1c1")
+    m3 <- mxCompare(a, Modified)
+    moded <- umxModify(a, update="c_r1c1")
+    m4 <- mxCompare(a, moded)
+    list("Var" = Var[i] <- Names1[i], #it's not giving me the actual name....
+         "APath" = APath[i] <- a$output$algebras$top.a_std,
+         "CPath" = CPath[i] <- a$output$algebras$top.c_std,
+         "EPath" = EPath[i] <- a$output$algebras$top.e_std,
+         "MzCor" = MzCor[i] <- cov2cor(attr(a$submodels$MZ$fitfunction$result, "expCov"))[1,2],
+         "DzCor" = DzCor[i] <- cov2cor(attr(a$submodels$DZ$fitfunction$result, "expCov"))[1,2],
+         "Warn" = Problem[i] <- m1$warnings,
+         "PvalueA" = PvalueA[i] <- m3$p[2],
+         "PvalueC" = PvalueC[i] <- m4$p[2])
+  }
+  #colnames(estimates3) <- c("Names1", "Apath", "Cpath", "Epath", "Problem")
+  #Names <- substr(Names1, 1, nchar(Names1)-1)
+  #estimates3[,1] <- Names
+  return(estimates3)
+}
+
+
+AceOfDiamonds.parallel <- function(D, V, ZYG, MZ, DZ) {
+  column_names <- colnames(D)
+  Names1 <- column_names[grepl("1$", column_names)] #make 
+  Names2 <- column_names[grepl("2$", column_names)]
+  selDVs <- c(Names1, Names2)
+  mzData <- D[D[,ZYG] ==MZ, selDVs]
+  dzData <- D[D[,ZYG] ==DZ, selDVs]
+  Names <- substr(Names1, 1, nchar(Names1)-1) 
+  Names3 <- Names[!Names %in% V]
+  #remove the ones because umx takes care of that stuff in the multivariate case
+  #Names2 <- column_names[grepl("2$", column_names)]
+  #s <- c()
+  #Names2
+  #Epic <- t(combn(Names, 2))
+  m2 <- NULL
+  Path1A <- NULL
+  CrossPathA <- NULL
+  SpecificA <- NULL
+  Path1C <- NULL
+  CrossPathC <- NULL
+  SpecificC <- NULL
+  Path1E <- NULL
+  CrossPathE <- NULL
+  SpecificE <- NULL
+  Answers <- NULL
+  Var1 <- NULL
+  Var2 <- NULL
+  i<- NULL
+  Epic1 <- Names3
+  selDVs <- NULL
+  Warn <- NULL
+  CrTwCrTrMZ <- NULL
+  CrTwCrTrDZ <- NULL
+  WiTwCrTrMz <- NULL
+  WiTwCrTrDZ <- NULL
+  #loop multiple phenotypes
+  Answers <- foreach(i=1:length(Epic1), .packages=c("umx", "data.table"), .combine='rbind')%dopar% {
+    # umx will add suffix (in this case "") + "1" or '2'
+    #SelDVs <- NULL
+    withWarnings <- function(expr) {
+      myWarnings <- NULL
+      wHandler <- function(w) {
+        myWarnings <<- c(myWarnings, list(w))
+        invokeRestart("muffleWarning")
+      }
+      val <- withCallingHandlers(expr, warning = wHandler)
+      list(value = val, warnings = myWarnings)
+    } 
+    Var1[i] <- Epic1[i]
+    Var2[i] <- V
+    selDVs = c(Epic1[i])
+    SelDfs = c(V)
+    #selDVs = c("anti", "Num")
+    a <- withWarnings(m1 <- umxGxE(selDVs = selDVs, selDefs=SelDfs, dzData = dzData, mzData = mzData, suffix ="", dropMissing=TRUE))
+    #initial path
+    list("Var1" = Var1[i], "Var2" = Var2[i], "AMain" = Path1A[i] <-  m1$output$estimate[1],
+         #cross path
+         "A Interaction" = CrossPathA[i] <- m1$output$estimate[4],
+         "Warn" = Warn[i] <- a$warnings)
+  }
+  Answers <- as.data.frame(Answers)
+  return(Answers)
+}
+
+#Bivariate analysis
+AceOfClubs.parallel <- function(D, ZYG, MZ, DZ){
+  column_names <- colnames(D)
+  Names1 <- column_names[grepl("1$", column_names)] #make 
+  Names2 <- column_names[grepl("2$", column_names)]
+  selDVs <- c(Names1, Names2)
+  mzData <- D[D[,ZYG] ==MZ, selDVs]
+  dzData <- D[D[,ZYG] ==DZ, selDVs]
+  Names <- substr(Names1, 1, nchar(Names1)-1) #remove the ones because umx takes care of that stuff in the multivariate case
+  #Names2 <- column_names[grepl("2$", column_names)]
+  #s <- c()
+  Warn <- NULL
+  Epic1 <- NULL
+  Epic2 <- NULL
+  Epic <- t(combn(Names, 2))
+  m2 <- NULL
+  Path1A <- NULL
+  CrossPathA <- NULL
+  SpecificA <- NULL
+  Path1C <- NULL
+  CrossPathC <- NULL
+  SpecificC <- NULL
+  Path1E <- NULL
+  CrossPathE <- NULL
+  SpecificE <- NULL
+  Answers <- NULL
+  Var1 <- NULL
+  Var2 <- NULL
+  i<- c()
+  Epic1 <- Epic[,1]
+  Epic2 <- Epic[,2]
+  CrTwCrTrMZ <- NULL
+  CrTwCrTrDZ <- NULL
+  WiTwCrTrMz <- NULL
+  WiTwCrTrDZ <- NULL
+  #loop multiple phenotypes
+  Answers <- foreach(i=1:nrow(Epic), .packages=c("umx", "data.table"), .combine='rbind')%dopar% {
+    withWarnings <- function(expr) {
+      myWarnings <- NULL
+      wHandler <- function(w) {
+        myWarnings <<- c(myWarnings, list(w))
+        invokeRestart("muffleWarning")
+      }
+      val <- withCallingHandlers(expr, warning = wHandler)
+      list(value = val, warnings = myWarnings)
+    } 
+    selDVs = c(Epic1[i], Epic2[i])  # umx will add suffix (in this case "") + "1" or '2'
+    a <- withWarnings(m1 <- umxACE(selDVs = selDVs, dzData = dzData, mzData = mzData, sep =""))
+    #Modified <- umxModify(m1, update="a_r2c1")
+    #m3 <- mxCompare(m1, Modified)
+    #initial path
+    list("Var1" = Epic1[i], "Var2" = Epic2[i], "Path1A" = Path1A[i] <-  m1$output$algebras$top.a_std[1],
+         #cross path
+         "CrossPathA" = CrossPathA[i] <- m1$output$algebras$top.a_std[2,1],
+         #specific path
+         "SpecificA" = SpecificA[i] <- m1$output$algebras$top.a_std[2,2],
+         #extract the coefficients
+         "Path1C"=Path1C[i] <-  m1$output$algebras$top.c_std[1],
+         "CrossPathC" = CrossPathC[i] <- m1$output$algebras$top.c_std[2,1],
+         "SpecificC" = SpecificC[i] <- m1$output$algebras$top.c_std[2,2],
+         "Path1E" = Path1E[i] <-  m1$output$algebras$top.e_std[1],
+         "CrossPathE" = CrossPathE[i] <- m1$output$algebras$top.e_std[2,1],
+         "SpecificE" = SpecificE[i] <- m1$output$algebras$top.e_std[2,2],
+         "rP" = WiTwCrTrMz[i] <- cov2cor(attr(m1$submodels$MZ$fitfunction$result, "expCov"))[1,2],
+         "CrTwCrTrMZ" = CrTwCrTrMZ[i] <- cov2cor(attr(m1$submodels$MZ$fitfunction$result, "expCov"))[1,4],
+         "CrTwCrTrDZ" = CrTwCrTrDZ[i] <- cov2cor(attr(m1$submodels$DZ$fitfunction$result, "expCov"))[1,4],
+         "Warn" = Warn[i] <- a$warnings
+         #"Pvalue" = PValue <- m3$p[2])
+    )
+  }
+  Answers <- as.data.frame(Answers)
+  #attach(Answers)
+  Answers$CrossPathA <- as.numeric(Answers$CrossPathA)
+  Answers$SpecificA <- as.numeric(Answers$SpecificA)
+  Answers$Path1A <- as.numeric(Answers$Path1A)
+  Answers$Path1C <- as.numeric(Answers$Path1C)
+  Answers$CrossPathC <- as.numeric(Answers$CrossPathC)
+  Answers$SpecificC <- as.numeric(Answers$SpecificC)
+  Answers$Path1E <- as.numeric(Answers$Path1E)
+  Answers$CrossPathE <- as.numeric(Answers$CrossPathE)
+  Answers$SpecificE <- as.numeric(Answers$SpecificE) 
+  Answers$rG <- TwoOfClubs(Answers$CrossPathA, Answers$SpecificA)
+  Answers$Gr <- ThreeOfClubs(Answers$Path1A, Answers$CrossPathA)
+  Answers$rC <- TwoOfClubs(Answers$CrossPathC, Answers$SpecificC)
+  Answers$Cr <- ThreeOfClubs(Answers$Path1C, Answers$CrossPathC)
+  Answers$rE <- TwoOfClubs(Answers$CrossPathE, Answers$SpecificE)
+  Answers$Er <- ThreeOfClubs(Answers$Path1E, Answers$CrossPathE)
+  Answers$PredictedR <- Answers$Gr+Answers$Cr+Answers$Er
+  return(Answers)
+}
+
+#Single variable with all others
+AceOfSpades.parallel <- function(D, V, ZYG, MZ, DZ) {
+  column_names <- colnames(D)
+  Names1 <- column_names[grepl("1$", column_names)] #make 
+  Names2 <- column_names[grepl("2$", column_names)]
+  selDVs <- c(Names1, Names2)
+  mzData <- D[D[,ZYG] ==MZ, selDVs]
+  dzData <- D[D[,ZYG] ==DZ, selDVs]
+  Names <- substr(Names1, 1, nchar(Names1)-1) 
+  Names3 <- Names[!Names %in% V]
+  #remove the ones because umx takes care of that stuff in the multivariate case
+  #Names2 <- column_names[grepl("2$", column_names)]
+  #s <- c()
+  #Names2
+  #Epic <- t(combn(Names, 2))
+  m2 <- NULL
+  Path1A <- NULL
+  CrossPathA <- NULL
+  SpecificA <- NULL
+  Path1C <- NULL
+  CrossPathC <- NULL
+  SpecificC <- NULL
+  Path1E <- NULL
+  CrossPathE <- NULL
+  SpecificE <- NULL
+  Answers <- NULL
+  Var1 <- NULL
+  Var2 <- NULL
+  i<- NULL
+  Epic1 <- Names3
+  selDVs <- NULL
+  Warn <- NULL
+  CrTwCrTrMZ <- NULL
+  CrTwCrTrDZ <- NULL
+  WiTwCrTrMz <- NULL
+  WiTwCrTrDZ <- NULL
+  #loop multiple phenotypes
+  Answers <- foreach(i=1:length(Epic1), .packages=c("umx", "data.table"), .combine='rbind')%dopar% {
+    # umx will add suffix (in this case "") + "1" or '2'
+    #SelDVs <- NULL
+    withWarnings <- function(expr) {
+      myWarnings <- NULL
+      wHandler <- function(w) {
+        myWarnings <<- c(myWarnings, list(w))
+        invokeRestart("muffleWarning")
+      }
+      val <- withCallingHandlers(expr, warning = wHandler)
+      list(value = val, warnings = myWarnings)
+    } 
+    Var1[i] <- Epic1[i]
+    Var2[i] <- V
+    selDVs = c(Epic1[i], V) 
+    #selDVs = c("anti", "Num")
+    a <- withWarnings(m1 <- umxACE(selDVs = selDVs, dzData = dzData, mzData = mzData, suffix =""))
+    m2 <- umxModify(m1, update="a_r2c1")
+    m3 <- umxCompare(m1, m2)
+    m3$p[2]
+    #initial path
+    list("Var1" = Var1[i], "Var2" = Var2[i], "Path1A" = Path1A[i] <-  m1$output$algebras$top.a_std[1],
+         #cross path
+         "CrossPathA" = CrossPathA[i] <- m1$output$algebras$top.a_std[2,1],
+         #specific path
+         "SpecificA" = SpecificA[i] <- m1$output$algebras$top.a_std[2,2],
+         #extract the coefficients
+         "Path1C"=Path1C[i] <-  m1$output$algebras$top.c_std[1],
+         "CrossPathC" = CrossPathC[i] <- m1$output$algebras$top.c_std[2,1],
+         "SpecificC" = SpecificC[i] <- m1$output$algebras$top.c_std[2,2],
+         "Path1E" = Path1E[i] <-  m1$output$algebras$top.e_std[1],
+         "CrossPathE" = CrossPathE[i] <- m1$output$algebras$top.e_std[2,1],
+         "SpecificE" = SpecificE[i] <- m1$output$algebras$top.e_std[2,2],
+         "rP" = WiTwCrTrMz[i] <- cov2cor(attr(m1$submodels$MZ$fitfunction$result, "expCov"))[1,2],
+         "CrTwCrTrMZ" = CrTwCrTrMZ[i] <- cov2cor(attr(m1$submodels$MZ$fitfunction$result, "expCov"))[1,4],
+         "CrTwCrTrDZ" = CrTwCrTrDZ[i] <- cov2cor(attr(m1$submodels$DZ$fitfunction$result, "expCov"))[1,4],
+         "Warn" = Warn[i] <- a$warnings,
+         "Pvalue" = PValue <- m3$p[2])
+  }
+  Answers <- as.data.frame(Answers)
+  #attach(Answers)
+  Answers$CrossPathA <- as.numeric(Answers$CrossPathA)
+  Answers$SpecificA <- as.numeric(Answers$SpecificA)
+  Answers$Path1A <- as.numeric(Answers$Path1A)
+  Answers$Path1C <- as.numeric(Answers$Path1C)
+  Answers$CrossPathC <- as.numeric(Answers$CrossPathC)
+  Answers$SpecificC <- as.numeric(Answers$SpecificC)
+  Answers$Path1E <- as.numeric(Answers$Path1E)
+  Answers$CrossPathE <- as.numeric(Answers$CrossPathE)
+  Answers$SpecificE <- as.numeric(Answers$SpecificE) 
+  Answers$rG <- TwoOfClubs(Answers$CrossPathA, Answers$SpecificA)
+  Answers$Gr <- ThreeOfClubs(Answers$Path1A, Answers$CrossPathA)
+  Answers$rC <- TwoOfClubs(Answers$CrossPathC, Answers$SpecificC)
+  Answers$Cr <- ThreeOfClubs(Answers$Path1C, Answers$CrossPathC)
+  Answers$rE <- TwoOfClubs(Answers$CrossPathE, Answers$SpecificE)
+  Answers$Er <- ThreeOfClubs(Answers$Path1E, Answers$CrossPathE)
+  Answers$PredictedR <- Answers$Gr+Answers$Cr+Answers$Er
+  return(Answers)
+}
+
+AceOfSpadesAE.parallel <- function(D, V, ZYG, MZ, DZ) {
+  column_names <- colnames(D)
+  Names1 <- column_names[grepl("1$", column_names)] #make 
+  Names2 <- column_names[grepl("2$", column_names)]
+  selDVs <- c(Names1, Names2)
+  mzData <- D[D[,ZYG] ==MZ, selDVs]
+  dzData <- D[D[,ZYG] ==DZ, selDVs]
+  Names <- substr(Names1, 1, nchar(Names1)-1) 
+  Names3 <- Names[!Names %in% V]
+  #remove the ones because umx takes care of that stuff in the multivariate case
+  #Names2 <- column_names[grepl("2$", column_names)]
+  #s <- c()
+  #Names2
+  #Epic <- t(combn(Names, 2))
+  m2 <- NULL
+  Path1A <- NULL
+  CrossPathA <- NULL
+  SpecificA <- NULL
+  Path1C <- NULL
+  CrossPathC <- NULL
+  SpecificC <- NULL
+  Path1E <- NULL
+  CrossPathE <- NULL
+  SpecificE <- NULL
+  Answers <- NULL
+  Var1 <- NULL
+  Var2 <- NULL
+  i<- NULL
+  Epic1 <- Names3
+  selDVs <- NULL
+  Warn <- NULL
+  CrTwCrTrMZ <- NULL
+  CrTwCrTrDZ <- NULL
+  WiTwCrTrMz <- NULL
+  WiTwCrTrDZ <- NULL
+  #loop multiple phenotypes
+  Answers <- foreach(i=1:length(Epic1), .packages=c("umx", "data.table"), .combine='rbind')%dopar% {
+    # umx will add suffix (in this case "") + "1" or '2'
+    #SelDVs <- NULL
+    withWarnings <- function(expr) {
+      myWarnings <- NULL
+      wHandler <- function(w) {
+        myWarnings <<- c(myWarnings, list(w))
+        invokeRestart("muffleWarning")
+      }
+      val <- withCallingHandlers(expr, warning = wHandler)
+      list(value = val, warnings = myWarnings)
+    } 
+    Var1[i] <- Epic1[i]
+    Var2[i] <- V
+    selDVs = c(Epic1[i], V) 
+    #selDVs = c("anti", "Num")
+    a <- withWarnings(m1 <- umxACE(selDVs = selDVs, dzData = dzData, mzData = mzData, suffix =""))
+    Moded <- umxModify(m1, update = c("c_r1c1", "c_r2c1", "c_r2c2"))
+    m2 <- umxModify(Moded, update="a_r2c1")
+    m3 <- umxCompare(Moded, m2)
+    m3$p[2]
+    #initial path
+    list("Var1" = Var1[i], "Var2" = Var2[i], "Path1A" = Path1A[i] <-  m1$output$algebras$top.a_std[1],
+         #cross path
+         "CrossPathA" = CrossPathA[i] <- m1$output$algebras$top.a_std[2,1],
+         #specific path
+         "SpecificA" = SpecificA[i] <- m1$output$algebras$top.a_std[2,2],
+         #extract the coefficients
+         "Path1C"=Path1C[i] <-  m1$output$algebras$top.c_std[1],
+         "CrossPathC" = CrossPathC[i] <- m1$output$algebras$top.c_std[2,1],
+         "SpecificC" = SpecificC[i] <- m1$output$algebras$top.c_std[2,2],
+         "Path1E" = Path1E[i] <-  m1$output$algebras$top.e_std[1],
+         "CrossPathE" = CrossPathE[i] <- m1$output$algebras$top.e_std[2,1],
+         "SpecificE" = SpecificE[i] <- m1$output$algebras$top.e_std[2,2],
+         "rP" = WiTwCrTrMz[i] <- cov2cor(attr(m1$submodels$MZ$fitfunction$result, "expCov"))[1,2],
+         "CrTwCrTrMZ" = CrTwCrTrMZ[i] <- cov2cor(attr(m1$submodels$MZ$fitfunction$result, "expCov"))[1,4],
+         "CrTwCrTrDZ" = CrTwCrTrDZ[i] <- cov2cor(attr(m1$submodels$DZ$fitfunction$result, "expCov"))[1,4],
+         "Warn" = Warn[i] <- a$warnings,
+         "Pvalue" = PValue <- m3$p[2])
+  }
+  Answers <- as.data.frame(Answers)
+  #attach(Answers)
+  Answers$CrossPathA <- as.numeric(Answers$CrossPathA)
+  Answers$SpecificA <- as.numeric(Answers$SpecificA)
+  Answers$Path1A <- as.numeric(Answers$Path1A)
+  Answers$Path1C <- as.numeric(Answers$Path1C)
+  Answers$CrossPathC <- as.numeric(Answers$CrossPathC)
+  Answers$SpecificC <- as.numeric(Answers$SpecificC)
+  Answers$Path1E <- as.numeric(Answers$Path1E)
+  Answers$CrossPathE <- as.numeric(Answers$CrossPathE)
+  Answers$SpecificE <- as.numeric(Answers$SpecificE) 
+  Answers$rG <- TwoOfClubs(Answers$CrossPathA, Answers$SpecificA)
+  Answers$Gr <- ThreeOfClubs(Answers$Path1A, Answers$CrossPathA)
+  Answers$rC <- TwoOfClubs(Answers$CrossPathC, Answers$SpecificC)
+  Answers$Cr <- ThreeOfClubs(Answers$Path1C, Answers$CrossPathC)
+  Answers$rE <- TwoOfClubs(Answers$CrossPathE, Answers$SpecificE)
+  Answers$Er <- ThreeOfClubs(Answers$Path1E, Answers$CrossPathE)
+  Answers$PredictedR <- Answers$Gr+Answers$Cr+Answers$Er
+  return(Answers)
+}
+
+
+AceOfSpadesA.parallel <- function(D, V, ZYG, MZ, DZ) {
+  column_names <- colnames(D)
+  Names1 <- column_names[grepl("1$", column_names)] #make 
+  Names2 <- column_names[grepl("2$", column_names)]
+  selDVs <- c(Names1, Names2)
+  mzData <- D[D[,ZYG] ==MZ, selDVs]
+  dzData <- D[D[,ZYG] ==DZ, selDVs]
+  Names <- substr(Names1, 1, nchar(Names1)-1) 
+  Names3 <- Names[!Names %in% V]
+  #remove the ones because umx takes care of that stuff in the multivariate case
+  #Names2 <- column_names[grepl("2$", column_names)]
+  #s <- c()
+  #Names2
+  #Epic <- t(combn(Names, 2))
+  m2 <- NULL
+  Path1A <- NULL
+  CrossPathA <- NULL
+  SpecificA <- NULL
+  Path1C <- NULL
+  CrossPathC <- NULL
+  SpecificC <- NULL
+  Path1E <- NULL
+  CrossPathE <- NULL
+  SpecificE <- NULL
+  Answers <- NULL
+  Var1 <- NULL
+  Var2 <- NULL
+  i<- NULL
+  Epic1 <- Names3
+  selDVs <- NULL
+  Warn <- NULL
+  CrTwCrTrMZ <- NULL
+  CrTwCrTrDZ <- NULL
+  WiTwCrTrMz <- NULL
+  WiTwCrTrDZ <- NULL
+  #loop multiple phenotypes
+  Answers <- foreach(i=1:length(Epic1), .packages=c("umx", "data.table"), .combine='rbind')%dopar% {
+    # umx will add suffix (in this case "") + "1" or '2'
+    #SelDVs <- NULL
+    withWarnings <- function(expr) {
+      myWarnings <- NULL
+      wHandler <- function(w) {
+        myWarnings <<- c(myWarnings, list(w))
+        invokeRestart("muffleWarning")
+      }
+      val <- withCallingHandlers(expr, warning = wHandler)
+      list(value = val, warnings = myWarnings)
+    } 
+    Var1[i] <- Epic1[i]
+    Var2[i] <- V
+    selDVs = c(Epic1[i], V) 
+    #selDVs = c("anti", "Num")
+    a <- withWarnings(m1 <- umxACE(selDVs = selDVs, dzData = dzData, mzData = mzData, suffix =""))
+    Moded <- umxModify(m1, update = c("c_r1c1", "c_r2c1", "c_r2c2", "e_r2c1"))
+    m2 <- umxModify(Moded, update="a_r2c1")
+    m3 <- umxCompare(Moded, m2)
+    m3$p[2]
+    #initial path
+    list("Var1" = Var1[i], "Var2" = Var2[i], "Path1A" = Path1A[i] <-  m1$output$algebras$top.a_std[1],
+         #cross path
+         "CrossPathA" = CrossPathA[i] <- m1$output$algebras$top.a_std[2,1],
+         #specific path
+         "SpecificA" = SpecificA[i] <- m1$output$algebras$top.a_std[2,2],
+         #extract the coefficients
+         "Path1C"=Path1C[i] <-  m1$output$algebras$top.c_std[1],
+         "CrossPathC" = CrossPathC[i] <- m1$output$algebras$top.c_std[2,1],
+         "SpecificC" = SpecificC[i] <- m1$output$algebras$top.c_std[2,2],
+         "Path1E" = Path1E[i] <-  m1$output$algebras$top.e_std[1],
+         "CrossPathE" = CrossPathE[i] <- m1$output$algebras$top.e_std[2,1],
+         "SpecificE" = SpecificE[i] <- m1$output$algebras$top.e_std[2,2],
+         "rP" = WiTwCrTrMz[i] <- cov2cor(attr(m1$submodels$MZ$fitfunction$result, "expCov"))[1,2],
+         "CrTwCrTrMZ" = CrTwCrTrMZ[i] <- cov2cor(attr(m1$submodels$MZ$fitfunction$result, "expCov"))[1,4],
+         "CrTwCrTrDZ" = CrTwCrTrDZ[i] <- cov2cor(attr(m1$submodels$DZ$fitfunction$result, "expCov"))[1,4],
+         "Warn" = Warn[i] <- a$warnings,
+         "Pvalue" = PValue <- m3$p[2])
+  }
+  Answers <- as.data.frame(Answers)
+  #attach(Answers)
+  Answers$CrossPathA <- as.numeric(Answers$CrossPathA)
+  Answers$SpecificA <- as.numeric(Answers$SpecificA)
+  Answers$Path1A <- as.numeric(Answers$Path1A)
+  Answers$Path1C <- as.numeric(Answers$Path1C)
+  Answers$CrossPathC <- as.numeric(Answers$CrossPathC)
+  Answers$SpecificC <- as.numeric(Answers$SpecificC)
+  Answers$Path1E <- as.numeric(Answers$Path1E)
+  Answers$CrossPathE <- as.numeric(Answers$CrossPathE)
+  Answers$SpecificE <- as.numeric(Answers$SpecificE) 
+  Answers$rG <- TwoOfClubs(Answers$CrossPathA, Answers$SpecificA)
+  Answers$Gr <- ThreeOfClubs(Answers$Path1A, Answers$CrossPathA)
+  Answers$rC <- TwoOfClubs(Answers$CrossPathC, Answers$SpecificC)
+  Answers$Cr <- ThreeOfClubs(Answers$Path1C, Answers$CrossPathC)
+  Answers$rE <- TwoOfClubs(Answers$CrossPathE, Answers$SpecificE)
+  Answers$Er <- ThreeOfClubs(Answers$Path1E, Answers$CrossPathE)
+  Answers$PredictedR <- Answers$Gr+Answers$Cr+Answers$Er
+  return(Answers)
+}
+
+#Need to put the stuff from Spades in here
+AceOfHearts.Vertex <- function(D, ZYG, MZ, DZ){
+  Zeros <- D[, apply(D == 0, 2, all)]
+  D <-  D[, !apply(D == 0, 2, all)]
+  #length(unique(twi2$family))
+  column_names <- colnames(D)
+  Names1 <- column_names[grepl("1$", column_names)] #make 
+  Names2 <- column_names[grepl("2$", column_names)]
+  selDVs2 <- c(Names1, Names2)
+  Names <- sub("1", "", Names1)
+  selDVs <- c()
+  ZYG1 <- ZYG
+  PValue <- NULL
+  mzData <- D[D[,ZYG] ==MZ, selDVs2]
+  dzData <- D[D[,ZYG] ==DZ, selDVs2]
+  as.data.frame(Answers <- c())
+  APath <- NULL
+  CPath <- NULL
+  EPath <- NULL
+  univariate <- NULL
+  Problem <- NULL
+  a <- NULL
+  Var <- NULL
+  APath <- NULL
+  CPath <- NULL
+  EPath <- NULL
+  estimates3 <- NULL
+  MzCor <- NULL
+  DzCor <- NULL
+  PV <- NULL
+  estimates3 <- foreach(i=1:length(Names), .packages=c("umx", "data.table"), .combine='rbind')%dopar% {
+    selDVs <- c(Names[i])
+    selDVs2 <- c(Names1[i], Names2[i])
+    withWarnings <- function(expr) {
+      myWarnings <- NULL
+      wHandler <- function(w) {
+        myWarnings <<- c(myWarnings, list(w))
+        invokeRestart("muffleWarning")
+      }
+      val <- withCallingHandlers(expr, warning = wHandler)
+      list(value = val, warnings = myWarnings)
+    } 
+    m1 <-  withWarnings(a<-umxACE(selDVs = selDVs2, dzData = dzData, mzData = mzData))
+    
+    list("Var" = Var[i] <- Names1[i], #it's not giving me the actual name....
+         "APath" = APath[i] <- a$output$algebras$top.a_std,
+         "CPath" = CPath[i] <- a$output$algebras$top.c_std,
+         "EPath" = EPath[i] <- a$output$algebras$top.e_std,
+         "MzCor" = MzCor[i] <- cov2cor(attr(a$submodels$MZ$fitfunction$result, "expCov"))[1,2],
+         "DzCor" = DzCor[i] <- cov2cor(attr(a$submodels$DZ$fitfunction$result, "expCov"))[1,2],
+         "Warn" = Problem[i] <- m1$warnings
+    )
+  }
+  #colnames(estimates3) <- c("Names1", "Apath", "Cpath", "Epath", "Problem")
+  #Names <- substr(Names1, 1, nchar(Names1)-1)
+  #estimates3[,1] <- Names
+  return(estimates3)
+}
+
+#Works
+AceOfSpades.Vertex.v2 <- function(D, V, ZYG, MZ, DZ){
+  #length(unique(twi2$family))
+  column_names <- colnames(D)
+  Names1 <- column_names[grepl("1$", column_names)] #make 
+  Names2 <- column_names[grepl("2$", column_names)]
+  selDVs <- c(Names1, Names2)
+  mzData <- D[D[,ZYG] ==MZ, selDVs]
+  dzData <- D[D[,ZYG] ==DZ, selDVs]
+  Names <- substr(Names1, 1, nchar(Names1)-1) 
+  Names3 <- Names[!Names %in% V]
+  #remove the ones because umx takes care of that stuff in the multivariate case
+  #Names2 <- column_names[grepl("2$", column_names)]
+  #s <- c()
+  #Names2
+  #Epic <- t(combn(Names, 2))
+  m2 <- NULL
+  Path1A <- NULL
+  CrossPathA <- NULL
+  SpecificA <- NULL
+  Path1C <- NULL
+  CrossPathC <- NULL
+  SpecificC <- NULL
+  Path1E <- NULL
+  CrossPathE <- NULL
+  SpecificE <- NULL
+  Answers <- NULL
+  Var1 <- NULL
+  Var2 <- NULL
+  i<- NULL
+  Epic1 <- Names3
+  selDVs <- NULL
+  Warn <- NULL
+  CrTwCrTrMZ <- NULL
+  CrTwCrTrDZ <- NULL
+  WiTwCrTrMz <- NULL
+  WiTwCrTrDZ <- NULL
+  #loop multiple phenotypes
+  
+  Answers <- foreach(i=1:length(Epic1), .packages=c("umx", "data.table"), .combine='rbind')%dopar% {
+    tryCatch({
+      # umx will add suffix (in this case "") + "1" or '2'
+      #SelDVs <- NULL
+      withWarnings <- function(expr) {
+        myWarnings <- NULL
+        wHandler <- function(w) {
+          myWarnings <<- c(myWarnings, list(w))
+          invokeRestart("muffleWarning")
+        }
+        val <- withCallingHandlers(expr, warning = wHandler)
+        list(value = val, warnings = myWarnings)
+      } 
+      Var1[i] <- Epic1[i]
+      Var2[i] <- V
+      selDVs = c(Epic1[i], V) 
+      #selDVs = c("anti", "Num")
+      a <- withWarnings(m1 <- umxACE(selDVs = selDVs, dzData = dzData, mzData = mzData, suffix =""))
+      #initial path
+      list("Var1" = Var1[i], "Var2" = Var2[i], "Path1A" = Path1A[i] <-  m1$output$algebras$top.a_std[1],
+           #cross path
+           "CrossPathA" = CrossPathA[i] <- m1$output$algebras$top.a_std[2,1],
+           #specific path
+           "SpecificA" = SpecificA[i] <- m1$output$algebras$top.a_std[2,2],
+           #extract the coefficients
+           "Path1C"=Path1C[i] <-  m1$output$algebras$top.c_std[1],
+           "CrossPathC" = CrossPathC[i] <- m1$output$algebras$top.c_std[2,1],
+           "SpecificC" = SpecificC[i] <- m1$output$algebras$top.c_std[2,2],
+           "Path1E" = Path1E[i] <-  m1$output$algebras$top.e_std[1],
+           "CrossPathE" = CrossPathE[i] <- m1$output$algebras$top.e_std[2,1],
+           "SpecificE" = SpecificE[i] <- m1$output$algebras$top.e_std[2,2],
+           "rP" = WiTwCrTrMz[i] <- cov2cor(attr(m1$submodels$MZ$fitfunction$result, "expCov"))[1,2],
+           "CrTwCrTrMZ" = CrTwCrTrMZ[i] <- cov2cor(attr(m1$submodels$MZ$fitfunction$result, "expCov"))[1,4],
+           "CrTwCrTrDZ" = CrTwCrTrDZ[i] <- cov2cor(attr(m1$submodels$DZ$fitfunction$result, "expCov"))[1,4],
+           "Warn" = Warn[i] <- a$warnings)
+    }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
+  }
+  return(Answers)
+}
+#put at the bottom of the Vertex wise before writing the files. 
+
+Output1 <- as.data.frame(Output1)
+Output1$CrossPathA <- as.numeric(Output1$CrossPathA)
+Output1$SpecificA <- as.numeric(Output1$SpecificA)
+Output1$Path1A <- as.numeric(Output1$Path1A)
+Output1$Path1C <- as.numeric(Output1$Path1C)
+Output1$CrossPathC <- as.numeric(Output1$CrossPathC)
+Output1$SpecificC <- as.numeric(Output1$SpecificC)
+Output1$Path1E <- as.numeric(Output1$Path1E)
+Output1$CrossPathE <- as.numeric(Output1$CrossPathE)
+Output1$SpecificE <- as.numeric(Output1$SpecificE) 
+Output1$rG <- TwoOfClubs(Output1$CrossPathA, Output1$SpecificA)
+Output1$Gr <- ThreeOfClubs(Output1$Path1A, Output1$CrossPathA)
+Output1$rC <- TwoOfClubs(Output1$CrossPathC, Output1$SpecificC)
+Output1$Cr <- ThreeOfClubs(Output1$Path1C, Output1$CrossPathC)
+Output1$rE <- TwoOfClubs(Output1$CrossPathE, Output1$SpecificE)
+Output1$Er <- ThreeOfClubs(Output1$Path1E, Output1$CrossPathE)
+Output1$PredictedR <- Output1$Gr+Output1$Cr+Output1$Er
+Output1$Warn <- NULL
+fwrite(Output1, "GMRaven.csv")
+#Have to Null the "Warn" column first
+
+VertexNames.Spades <- function(D, V){
+  #length(unique(twi2$family))
+  column_names <- colnames(D)
+  Names1 <- column_names[grepl("1$", column_names)] #make 
+  Names2 <- column_names[grepl("2$", column_names)]
+  selDVs <- c(Names1, Names2)
+  Names <- substr(Names1, 1, nchar(Names1)-1) 
+  Names3 <- Names[!Names %in% V]
+  DataF <- matrix(1:length(Names3))
+  DataF[,1] <- Names3
+  DataF <- as.data.frame(DataF)
+  names(DataF)[names(DataF) == "V1"] <- 'Var1'
+  return(DataF)
+}
+
+#D is dataframe
+#N is the first column with data you want to scale by. 
+FourOfHearts.Scale <- function(D, N){
+  Scaling <- function(x, y) {
+    Var <- x/sd(x, na.rm=TRUE)
+    return(Var)
+  }
+  #Dem <- cbind(TwinThickRedo$family, TwinThickRedo$Zyg, TwinThickRedo$sex)
+  #TwinThickRedo$sex <- NULL
+  M <- N-1
+  Initial <- as.data.frame(sapply(D[,N:ncol(D)], Scaling)); 
+  Scaled <- as.data.frame(cbind(D[1:M], Initial, make.row.names=TRUE)) 
+  Scaled$make.row.names <- NULL
+  return(Scaled)
+}
+
+VertexNames.Spades <- function(D, V){
+  #length(unique(twi2$family))
+  column_names <- colnames(D)
+  Names1 <- column_names[grepl("1$", column_names)] #make 
+  Names2 <- column_names[grepl("2$", column_names)]
+  selDVs <- c(Names1, Names2)
+  Names <- substr(Names1, 1, nchar(Names1)-1) 
+  Names3 <- Names[!Names %in% V]
+  DataF <- matrix(1:length(Names3))
+  DataF[,1] <- Names3
+  DataF <- as.data.frame(DataF)
+  names(DataF)[names(DataF) == "V1"] <- 'Var1'
+  return(DataF)
+}
+
+
+RTFCorrection2 <- function(p, tmm, smm, d) {
+  resel_count <- tmm/(smm^d) 
+  z <- as.array(p)
+  z <- abs(qnorm(z))
+  Answer <- (resel_count * (4 * log(2)) * ((2*pi)**(-3./2)) * z) * exp((z ** 2)*(-0.5))
+  Truth <- ifelse(Answer >= .05, 0, 1)
+  knowledge <- c(Answer, Truth)
+  return(knowledge)}
+
+AceOfHeartsAE.parallel <- function(D, ZYG, MZ, DZ){
+  #length(unique(twi2$family))
+  column_names <- colnames(D)
+  Names1 <- column_names[grepl("1$", column_names)] #make 
+  Names2 <- column_names[grepl("2$", column_names)]
+  selDVs2 <- c(Names1, Names2)
+  Names <- sub("1", "", Names1)
+  selDVs <- c()
+  ZYG1 <- ZYG
+  PValue <- NULL
+  mzData <- D[D[,ZYG] ==MZ, selDVs2]
+  dzData <- D[D[,ZYG] ==DZ, selDVs2]
+  as.data.frame(Answers <- c())
+  APath <- NULL
+  CPath <- NULL
+  EPath <- NULL
+  univariate <- NULL
+  Problem <- NULL
+  a <- NULL
+  Var <- NULL
+  APath <- NULL
+  CPath <- NULL
+  EPath <- NULL
+  estimates3 <- NULL
+  MzCor <- NULL
+  DzCor <- NULL
+  PV <- NULL
+  PvalueA <- NULL
+  PvalueC <- NULL
+  estimates3 <- foreach(i=1:length(Names), .packages=c("umx", "data.table"), .combine='rbind') %dopar% {
+    selDVs <- c(Names[i])
+    selDVs2 <- c(Names1[i], Names2[i])
+    withWarnings <- function(expr) {
+      myWarnings <- NULL
+      wHandler <- function(w) {
+        myWarnings <<- c(myWarnings, list(w))
+        invokeRestart("muffleWarning")
+      }
+      val <- withCallingHandlers(expr, warning = wHandler)
+      list(value = val, warnings = myWarnings)
+    } 
+    m1 <-  withWarnings(a <-umxACE(selDVs = selDVs, dzData = dzData, mzData = mzData))
+    moded <- umxModify(a, update="c_r1c1")
+    Modified <- umxModify(moded, update="a_r1c1")
+    m3 <- mxCompare(moded, Modified)
+    list("Var" = Var[i] <- Names1[i], #it's not giving me the actual name....
+         "APath" = APath[i] <- a$output$algebras$top.a_std,
+         "CPath" = CPath[i] <- a$output$algebras$top.c_std,
+         "EPath" = EPath[i] <- a$output$algebras$top.e_std,
+         "MzCor" = MzCor[i] <- cov2cor(attr(a$submodels$MZ$fitfunction$result, "expCov"))[1,2],
+         "DzCor" = DzCor[i] <- cov2cor(attr(a$submodels$DZ$fitfunction$result, "expCov"))[1,2],
+         "Warn" = Problem[i] <- m1$warnings,
+         "PvalueA" = PvalueA[i] <- m3$p[2]
+    )
+  }
+  #colnames(estimates3) <- c("Names1", "Apath", "Cpath", "Epath", "Problem")
+  #Names <- substr(Names1, 1, nchar(Names1)-1)
+  #estimates3[,1] <- Names
+  return(estimates3)
+}
+
+
+AceOfHeartsAll.parallel <- function(D, ZYG, MZ, DZ){
+  #length(unique(twi2$family))
+  column_names <- colnames(D)
+  Names1 <- column_names[grepl("1$", column_names)] #make 
+  Names2 <- column_names[grepl("2$", column_names)]
+  selDVs2 <- c(Names1, Names2)
+  Names <- sub("1", "", Names1)
+  selDVs <- c()
+  ZYG1 <- ZYG
+  PValue <- NULL
+  mzData <- D[D[,ZYG] ==MZ, selDVs2]
+  dzData <- D[D[,ZYG] ==DZ, selDVs2]
+  as.data.frame(Answers <- c())
+  APath <- NULL
+  CPath <- NULL
+  EPath <- NULL
+  univariate <- NULL
+  Problem <- NULL
+  a <- NULL
+  Var <- NULL
+  APath <- NULL
+  CPath <- NULL
+  EPath <- NULL
+  estimates3 <- NULL
+  MzCor <- NULL
+  DzCor <- NULL
+  AE <- NULL
+  CE <- NULL
+  Eonly <- NULL
+  ACEvsAE <-  NULL
+  ACEvsCE <- NULL
+  ACEvsEonly <- NULL
+  AEvsEonly <- NULL
+  CEvsEonly <- NULL
+  m1s <- NULL
+  AEs <- NULL
+  CEs <- NULL
+  Eonlys <- NULL
+  ACE_LL <- NULL 
+  AE_LL <- NULL
+  CE_LL <- NULL
+  Eonly_LL <- NULL
+  N2LL_ACEvsAE <- NULL
+  P_ACEvsAE <- NULL
+  N2LL_ACEvsCE <- NULL
+  P_ACEvsCE <- NULL
+  N2LL_ACEvsEonly <- NULL
+  P_ACEvsEonly <- NULL
+  N2LL_AEvsEonly <- NULL
+  P_AEvsEonly <- NULL
+  N2LL_AEvsEonly <- NULL
+  P_AEvsEonly <- NULL
+  N2LL_CEvsEonly <- NULL
+  P_CEvsEonly <- NULL
+  estimates3 <- foreach(i=1:length(Names), .packages=c("umx", "data.table"), .combine='rbind') %dopar% {
+    selDVs <- c(Names[i])
+    selDVs2 <- c(Names1[i], Names2[i])
+    withWarnings <- function(expr) {
+      myWarnings <- NULL
+      wHandler <- function(w) {
+        myWarnings <<- c(myWarnings, list(w))
+        invokeRestart("muffleWarning")
+      }
+      val <- withCallingHandlers(expr, warning = wHandler)
+      list(value = val, warnings = myWarnings)
+    } 
+    a <-  withWarnings(m1 <-umxACE(selDVs = selDVs, dzData = dzData, mzData = mzData, suffix=""))
+    AE <- umxModify(m1, update = c("c_r1c1"))
+    CE <- umxModify(m1, update = c("a_r1c1"))
+    Eonly <- umxModify(AE, update = c("a_r1c1"))
+    ACEvsAE <-  umxCompare(m1, AE)
+    ACEvsCE <- umxCompare(m1, CE)
+    ACEvsEonly <- umxCompare(m1, Eonly)
+    AEvsEonly <- umxCompare(AE, Eonly)
+    CEvsEonly <- umxCompare(CE, Eonly)
+    m1s <- summary(m1)
+    AEs <- summary(AE)
+    CEs <- summary(CE)
+    Eonlys <- summary(Eonly)
+    ACE_LL <- m1s$Minus2LogLikelihood 
+    AE_LL <-AEs$Minus2LogLikelihood
+    CE_LL <- CEs$Minus2LogLikelihood
+    Eonly_LL <- Eonlys$Minus2LogLikelihood
+    list("Var" = Var[i] <- Names1[i], #it's not giving me the actual name....
+         "APath" = APath[i] <- m1$output$algebras$top.a_std,
+         "CPath" = CPath[i] <- m1$output$algebras$top.c_std,
+         "EPath" = EPath[i] <- m1$output$algebras$top.e_std,
+         "MzCor" = MzCor[i] <- cov2cor(attr(m1$submodels$MZ$fitfunction$result, "expCov"))[1,2],
+         "DzCor" = DzCor[i] <- cov2cor(attr(m1$submodels$DZ$fitfunction$result, "expCov"))[1,2],
+         "Warn" = Problem[i] <- a$warnings,
+         "ACE_LL" = ACE_LL[i] <- m1s$Minus2LogLikelihood, 
+         "AE_LL" = AE_LL[i] <-AEs$Minus2LogLikelihood,
+         "CE_LL" = CE_LL[i] <- CEs$Minus2LogLikelihood,
+         "Eonly_LL" = Eonly_LL[i] <- Eonlys$Minus2LogLikelihood,
+         "N2LL_ACEvsAE" = N2LL_ACEvsAE[i] <- ACEvsAE[[2,3]],
+         "P_ACeVsAE" = P_ACEvsAE[i] <- ACEvsAE$p[2],
+         "N2LL_ACEvsCE" = N2LL_ACEvsCE[i] <- ACEvsCE[[2,3]],
+         "P_ACEvsCEonly" = P_ACEvsCE [i] <- ACEvsCE$p[2],
+         "N2LL_ACEvsEonly" = N2LL_ACEvsEonly[i] <- ACEvsEonly[[2,3]],
+         "P_ACEvsEonly" = P_ACEvsEonly[i] <- ACEvsEonly$p[2],
+         "N2LL_AEvsEonly" = N2LL_AEvsEonly[i] <- AEvsEonly[[2,3]],
+         "P_AEvsEonly" = P_AEvsEonly[i] <- AEvsEonly$p[2],
+         "N2LL_CEvsEonly" = N2LL_CEvsEonly[i] <- CEvsEonly[[2,3]],
+         "P_CEvsEonly" =  P_CEvsEonly[i] <- CEvsEonly$p[2]
+    )
+  }
+  #colnames(estimates3) <- c("Names1", "Apath", "Cpath", "Epath", "Problem")
+  #Names <- substr(Names1, 1, nchar(Names1)-1)
+  #estimates3[,1] <- Names
+  return(estimates3)
+}
+
+
+AceOfSpades.vertex <- function(D, V, ZYG, MZ, DZ) {
+  column_names <- colnames(D)
+  Names1 <- column_names[grepl("1$", column_names)] #make 
+  Names2 <- column_names[grepl("2$", column_names)]
+  selDVs <- c(Names1, Names2)
+  mzData <- D[D[,ZYG] ==MZ, selDVs]
+  dzData <- D[D[,ZYG] ==DZ, selDVs]
+  Names <- substr(Names1, 1, nchar(Names1)-1) 
+  Names3 <- Names[!Names %in% V]
+  #remove the ones because umx takes care of that stuff in the multivariate case
+  #Names2 <- column_names[grepl("2$", column_names)]
+  #s <- c()
+  #Names2
+  #Epic <- t(combn(Names, 2))
+  m2 <- NULL
+  Path1A <- NULL
+  CrossPathA <- NULL
+  SpecificA <- NULL
+  Path1C <- NULL
+  CrossPathC <- NULL
+  SpecificC <- NULL
+  Path1E <- NULL
+  CrossPathE <- NULL
+  SpecificE <- NULL
+  Answers <- NULL
+  Var1 <- NULL
+  Var2 <- NULL
+  i<- NULL
+  Epic1 <- Names3
+  selDVs <- NULL
+  Warn <- NULL
+  CrTwCrTrMZ <- NULL
+  CrTwCrTrDZ <- NULL
+  WiTwCrTrMz <- NULL
+  WiTwCrTrDZ <- NULL
+  #loop multiple phenotypes
+  Answers <- foreach(i=1:length(Epic1), .packages=c("umx", "data.table"), .combine='rbind')%dopar% {
+    # umx will add suffix (in this case "") + "1" or '2'
+    #SelDVs <- NULL
+    tryCatch({
+      withWarnings <- function(expr) {
+        myWarnings <- NULL
+        wHandler <- function(w) {
+          myWarnings <<- c(myWarnings, list(w))
+          invokeRestart("muffleWarning")
+        }
+        val <- withCallingHandlers(expr, warning = wHandler)
+        list(value = val, warnings = myWarnings)
+      } 
+      Var1[i] <- Epic1[i]
+      Var2[i] <- V
+      selDVs = c(Epic1[i], V) 
+      #selDVs = c("anti", "Num")
+      a <- withWarnings(m1 <- umxModify(m2 <- umxACE(selDVs = selDVs, dzData = dzData, mzData = mzData, suffix =""), update = c("c_r2c2", "c_r2c1")))
+      Modified <- umxModify(m1, update="a_r2c1")
+      m3 <- mxCompare(m1, Modified)
+      #initial path
+      list("Var1" = Var1[i], "Var2" = Var2[i], "Path1A" = Path1A[i] <-  m1$output$algebras$top.a_std[1],
+           #cross path
+           "CrossPathA" = CrossPathA[i] <- m1$output$algebras$top.a_std[2,1],
+           #specific path
+           "SpecificA" = SpecificA[i] <- m1$output$algebras$top.a_std[2,2],
+           #extract the coefficients
+           "Path1C"=Path1C[i] <-  m1$output$algebras$top.c_std[1],
+           "CrossPathC" = CrossPathC[i] <- m1$output$algebras$top.c_std[2,1],
+           "SpecificC" = SpecificC[i] <- m1$output$algebras$top.c_std[2,2],
+           "Path1E" = Path1E[i] <-  m1$output$algebras$top.e_std[1],
+           "CrossPathE" = CrossPathE[i] <- m1$output$algebras$top.e_std[2,1],
+           "SpecificE" = SpecificE[i] <- m1$output$algebras$top.e_std[2,2],
+           "rP" = WiTwCrTrMz[i] <- cov2cor(attr(m1$submodels$MZ$fitfunction$result, "expCov"))[1,2],
+           "CrTwCrTrMZ" = CrTwCrTrMZ[i] <- cov2cor(attr(m1$submodels$MZ$fitfunction$result, "expCov"))[1,4],
+           "CrTwCrTrDZ" = CrTwCrTrDZ[i] <- cov2cor(attr(m1$submodels$DZ$fitfunction$result, "expCov"))[1,4],
+           "Warn" = Warn[i] <- a$warnings,
+           "Pvalue" = PValue <- m3$p[2])
+    }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
+  }
+  Answers <- as.data.frame(Answers)
+  #attach(Answers)
+  Answers$CrossPathA <- as.numeric(Answers$CrossPathA)
+  Answers$SpecificA <- as.numeric(Answers$SpecificA)
+  Answers$Path1A <- as.numeric(Answers$Path1A)
+  Answers$Path1C <- as.numeric(Answers$Path1C)
+  Answers$CrossPathC <- as.numeric(Answers$CrossPathC)
+  Answers$SpecificC <- as.numeric(Answers$SpecificC)
+  Answers$Path1E <- as.numeric(Answers$Path1E)
+  Answers$CrossPathE <- as.numeric(Answers$CrossPathE)
+  Answers$SpecificE <- as.numeric(Answers$SpecificE) 
+  Answers$rG <- TwoOfClubs(Answers$CrossPathA, Answers$SpecificA)
+  Answers$Gr <- ThreeOfClubs(Answers$Path1A, Answers$CrossPathA)
+  Answers$rC <- TwoOfClubs(Answers$CrossPathC, Answers$SpecificC)
+  Answers$Cr <- ThreeOfClubs(Answers$Path1C, Answers$CrossPathC)
+  Answers$rE <- TwoOfClubs(Answers$CrossPathE, Answers$SpecificE)
+  Answers$Er <- ThreeOfClubs(Answers$Path1E, Answers$CrossPathE)
+  Answers$PredictedR <- Answers$Gr+Answers$Cr+Answers$Er
+  return(Answers)
+}
+
+PermutationThrZygZ <- function(D, V, ZYG, MZ, DZ, P) {
+  column_names <- colnames(D)
+  Names1 <- column_names[grepl("1$", column_names)] #make 
+  Names2 <- column_names[grepl("2$", column_names)]
+  selDVs <- c(Names1, Names2)
+  mzData <- D[D[,ZYG] ==MZ, selDVs]
+  dzData <- D[D[,ZYG] ==DZ, selDVs]
+  Names <- substr(Names1, 1, nchar(Names1)-1) 
+  Names3 <- Names[!Names %in% V]
+  #remove the ones because umx takes care of that stuff in the multivariate case
+  #Names2 <- column_names[grepl("2$", column_names)]
+  #s <- c()
+  #Names2
+  #Epic <- t(combn(Names, 2))
+  m2 <- NULL
+  Path1A <- NULL
+  CrossPathA <- NULL
+  SpecificA <- NULL
+  Path1C <- NULL
+  CrossPathC <- NULL
+  SpecificC <- NULL
+  Path1E <- NULL
+  CrossPathE <- NULL
+  SpecificE <- NULL
+  Answers <- NULL
+  Var1 <- NULL
+  Var2 <- NULL
+  i<- NULL
+  Epic1 <- Names3
+  selDVs <- NULL
+  Warn <- NULL
+  MZr1 <- NULL
+  MZr2 <- NULL
+  MMZ <- NULL
+  DZr1 <- NULL
+  DZr2 <- NULL
+  MDZ <- NULL
+  MaxP <- NULL
+  DFalcon <- NULL
+  pvalue <- NULL
+  #loop multiple phenotypes
+  Answers <- foreach(i=1:length(Epic1), .packages=c("umx", "data.table"), .combine='rbind')%dopar% {
+    Var1[1] <- Epic1[1]
+    Var2[1] <- V
+    selDVs = c(Epic1[1], V) 
+    nv        <- 2       # number of variables
+    ntv       <- nv*2    # number of total variables
+    selVars <- paste(selDVs,c(rep(1,nv),rep(2,nv)),sep="")
+    #selDVs = c("anti", "Num")
+    
+    MZr1 <- cor(mzData[selVars[1]], mzData[selVars[4]], use="pairwise.complete.obs")  #check where pipeline has selVars
+    MZr2 <- cor(mzData[selVars[3]], mzData[selVars[2]], use="pairwise.complete.obs")
+    rMZ <- (MZr1+MZr2)/2
+    DZr1 <- cor(dzData[selVars[1]], dzData[selVars[4]], use="pairwise.complete.obs")  #check where pipeline has selVars
+    DZr2 <- cor(dzData[selVars[3]], dzData[selVars[2]], use="pairwise.complete.obs")
+    rDZ <- (DZr1+DZr2)/2
+    DFalcon <- 2*(rMZ-rDZ)
+    
+    #keep 1st and 3rd as those should start the cholesky
+    Perms <- NULL
+    i <- 1
+    for(i in 1:P) {
+      mzPermed <- NULL
+      dZPermed <- NULL
+      DFeq <- NULL
+      EmperorsNewZyg <- sample(D[,ZYG])
+      DPermed <- cbind.data.frame(D, EmperorsNewZyg)
+      mzData <- DPermed[DPermed[,"EmperorsNewZyg"] ==1, selVars]
+      dzData <- DPermed[DPermed[,"EmperorsNewZyg"] ==2, selVars]
+      MZr1 <- cov(mzData[selVars[1]], mzData[selVars[4]], use="pairwise.complete.obs")  #check where pipeline has selVars
+      MZr2 <- cov(mzData[selVars[3]], mzData[selVars[2]], use="pairwise.complete.obs")
+      rMZ <- (MZr1+MZr2)/2
+      DZr1 <- cov(dzData[selVars[1]], dzData[selVars[4]], use="pairwise.complete.obs")  #check where pipeline has selVars
+      DZr2 <- cov(dzData[selVars[3]], dzData[selVars[2]], use="pairwise.complete.obs")
+      rDZ <- (DZr1+DZr2)/2
+      DFeq <- 2*(rMZ-rDZ) 
+      Perms[i] <- DFeq
+    }
+    #ZNorm within each permutaiton distribution to scale it
+    PermsZ <- scale(Perms)
+    #take the max ZValue
+    MaxP[i] <- max(PermsZ, na.rm=TRUE)
+    #initial path
+    list("Var1" = Var1[i], "Var2" = Var2[i], "MaxP" = MaxP[i] <- MaxP[i]) #add uncorrected P.
+    #}, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
+    
+    #maybe instead I should calcualte a max false positive p-value? and make a distribution of that?
+  }
+  Answers2 <- as.data.frame(Answers)
+  #Calculate a Pvalue from a distribution of max Zvalues, this is the corrected P-value dis
+  pvalue <- pnorm(-abs(as.numeric(Answers2$MaxP)))
+  #Quantiles of the distribution, determines threshold P-values 
+  Tiles <- quantile(abs(as.numeric(pvalue)), c(.05, .025, .01))
+  return(Tiles)
+}
