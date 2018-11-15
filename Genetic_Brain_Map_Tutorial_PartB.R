@@ -32,3 +32,7 @@ AnalysesFull  <- merge(FullNames, AnalysesOut, by = "Var1", all.x=TRUE)
 
 #Awesome! Write it out and got to the python script for part three
 write.csv(AnalysesFull, "LeftHemisphereBehavior.csv")
+
+
+#Finally, if you want to transform the p-values, log transfrom for plotting for example or add FDR correction, it is good to do that before 
+#running VertexNames.Spades and merging.  For example, the code below will use Random Field theory correction for a set smoothing kernel 
