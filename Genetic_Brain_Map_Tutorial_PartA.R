@@ -1,8 +1,8 @@
-#The below script will let you run a whole hemisphere/cortex/brain genetic analyses using vertex/voxelwise brain data. 
-#This analysis will run in parallel. This is a (very) rough draft, so please forgive any misspellings and poor grammar.
-#There are sections with a **** those are the ones where you will need to change something to make this script work
+#The below script will let you run a whole hemisphere genetic analyses using vertex/voxelwise brain data. 
+#This analysis will run in parallel. 
+#There are sections designated with a **** those are the ones where you will need to change something to make this script work
 
-#First! Make sure you have these packages in your environment.
+#First! Make sure you have these packages loaded in R.
 library(umx)
 library(utils)
 library(munsell)
@@ -11,15 +11,16 @@ library(doMC)
 library(data.table)
 library(parallel)
 
-#For windows users only, the parallelization process requires the packages below
+#For windows users only, the parallelization process requires the packages below, instead of doMC
 #library(doParallel)
 #library(doSNOW)
 
 #****Resgister your parallel backend. Basically, this means the number in the parantheses should be your number of cores.
-registerDoMC(32)
+#In this case, I am using  a computer  with 8 cores.
+registerDoMC(8)
 
 
-#I recommend this default settings for OpenMx and umx. I find they recover the most accurate estimates.
+#I recommend these default settings for OpenMx and umx. I find they recover the most accurate estimates.
 mxOption(NULL, "Standard Errors", "No")
 mxOption(NULL, "Calculate Hessian", "No") 
 mxOption(NULL, "Default optimizer", "SLSQP")
@@ -27,13 +28,15 @@ umx_set_auto_run(TRUE)
 umx_set_auto_plot(FALSE)
 
 #****read in a datafile that contains the vertex wise data and the variable of interest.
-#IMPORTANT NOTE: the data should be organized in a twinfile similar to the OpenMx built in files; Namely each twin has their own column
+#IMPORTANT NOTE: the data should be organized in a twin file similar to the OpenMx built-in files; More specifically each twin has their own column
 #for each variable, there is the same number of twin 1 as twin 2 variables, and they end in the suffix "1" for twin one and "2" for twin
-#two.  Any variable that you don't want run with this analysis should not end with a "1" or "2" suffix.
+#two.  Any variable that you don't want run with this analysis should not end with a "1" or "2" suffix.  
+#IMPORTANT NOTE: make sure that there aren't columns that end in 1 or 2 that aren't data on a variable you want to run.  If you have that
+#the function will give you junk estimates. 
 
 Analysis <- fread("VertexWiseTwinData.csv", header=T, data.table=FALSE)
 
-#Load these functions in your environment
+#Load these three functions into your environment
 TwoOfClubs <- function(x, y) { 
   A2 <- sqrt((x^2)+(y^2)) 
   rA <- (x/A2) 
@@ -153,13 +156,13 @@ AceOfSpades.vertex <- function(D, V, ZYG, MZ, DZ) {
 #this function first checks to see if data is of high enough quality for a twin model before running the associatoin at each vertex. 
 #With high quality data, almost all the vertices will pass this test. 
 
-#****first argument is your twin file, second is the name of the behavior you are mapping sans the "1" or "2" subscript, third argument
+#****Now! Let's actually run the map.  For the function below, the first argument is your twin file, second is the name of the behavior you are mapping sans the "1" or "2" subscript, third argument
 #is the name of your zygosity variable, 4th is the MZ coding and 5th is DZ coding. I recommend 1 and 2 for that to ensure no errors occur. 
 AnalysesOut <- AceOfSpades.vertex(Analysis, "Behavior", "Zyg", 1, 2)
 
-#Cool, write it out, and I will cover converting it back into free surfer in another tutorial.
+#Cool, write it out, and I will cover converting it back into free surfer in the other tutorial.  Scripts.
 save(AnalysesOut , file="AnalysesOut.Rdata")
 
-#Check out "Genetic_Brain_Map_Tutioral_PartB.R to see first few steps for conversion and plotting. I include there somethings to watch for. 
+
 
 
