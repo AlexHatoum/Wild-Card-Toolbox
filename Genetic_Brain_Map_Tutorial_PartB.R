@@ -1,8 +1,8 @@
-#After running the map, you may have your own pipeline for munging it into something that can be plotted.  If so, you can skip the 
+#After running the map, you may have your own pipeline for munging the vertexwise results into something that can be plotted.  If so, you can skip the 
 #the rest of the tutorials and move to that.  
 
 #For this script: When the brain is crushed in preprocessing, it can produce estimates that are not fit for the structural modeling 
-#Procedure.  This script will enter those vertices as missing.
+#procedure.  This script will enter those vertices as missing.
 
 #Run this code to get the function in your environment
 VertexNames.Spades <- function(D, V){
@@ -21,20 +21,21 @@ VertexNames.Spades <- function(D, V){
 }
 
 
-#The first argument is the Twinfile you ran in Genetic_Brain_Map_PartA (the previous Script) and the second is the name of the variable
+#The first argument is the Twinfile you ran in Genetic_Brain_Map_PartA (the previous script) and the second is the name of the variable
 #you mapped (the exact name of the column, these are the same arguments you used in the first arguments of the "AceOfSpades.vertex()" function
 
 FullNames <- VertexNames.Spades(Analysis, "Behavior")
 
-#Cool, now merge this column with the full file.  If you called all your objects the same as this and the previous script, you won't 
+#Cool, now merge this column with the full file.  If you named all your objects with the same names I have been using, you won't have
+#to change any of this code.
 #won't have to edit this code.  Both the Object created by "VertexNames.Spades()" and "AceOfSpades.vertex()" have a Var1 column. 
 AnalysesFull  <- merge(FullNames, AnalysesOut, by = "Var1", all.x=TRUE)
 
-#Awesome! Write it out and got to the python script for part three
+#Awesome! Write it out and go to the python script for part C
 write.csv(AnalysesFull, "LeftHemisphereBehavior.csv")
 
 
-#Finally, if you want to transform the p-values, log transfrom for plotting for example or add FDR correction, it is good to do that before 
+#Finally, if you want to transform the p-values (log transfrom for plotting for example or add FDR correction for example) it is good to do that before 
 #running VertexNames.Spades and merging.  For example, the code below will use Random Field theory correction for a set smoothing kernel 
 
 # first argument is the column of p-values from Tutioral_PartA, second is the total mm of your brain template.  The third is the 
@@ -49,6 +50,6 @@ RFTCorrectionC <- function(p, tmm, smm, d) {
   knowledge <- c(Answer, Truth)
   return(knowledge)}
 
-#For example the code below will add a p-value corrected column with a brain template that has 2000 mm template, average smoothness at 
-#14.33 and smoothing over 2 dimensions (often what is done in surface-based images). 
+#For example the code below will add a p-value corrected colum.  The brain template is 2000 mm in size, average smoothness of the brain is
+#14.33 and smoothing was done over 2 dimensions (often what is done in surface-based images). 
 Analysis$RFTcorrected <- RFTCorrectioinC(Analysis$P-value, 20000, 14.33, 2) 
