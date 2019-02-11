@@ -36,20 +36,4 @@ write.csv(AnalysesFull, "LeftHemisphereBehavior.csv")
 
 
 #Finally, if you want to transform the p-values (log transfrom for plotting for example or add FDR correction for example) it is good to do that before 
-#running VertexNames.Spades and merging.  For example, the code below will use Random Field theory correction for a set smoothing kernel 
-
-# first argument is the column of p-values from Tutioral_PartA, second is the total mm of your brain template.  The third is the 
-#Smoothness of your data in mm (Freesurfer gives you this if you run a phenotypic analysis with Qdec). and the the last argument is the
-#dimensions that you are looking at, i.e. 2D, 3D, or 4D estimates)
-RFTCorrectionC <- function(p, tmm, smm, d) {
-  resel_count <- tmm/(smm^d) 
-  z <- as.array(p)
-  z <- abs(qnorm(z))
-  Answer <- (resel_count * (4 * log(2)) * ((2*pi)**(-3./2)) * z) * exp((z ** 2)*(-0.5))
-  Truth <- ifelse(Answer >= .05, 0, 1)
-  knowledge <- c(Answer, Truth)
-  return(knowledge)}
-
-#For example the code below will add a p-value corrected colum.  The brain template is 2000 mm in size, average smoothness of the brain is
-#14.33 and smoothing was done over 2 dimensions (often what is done in surface-based images). 
-Analysis$RFTcorrected <- RFTCorrectioinC(Analysis$P-value, 20000, 14.33, 2) 
+#running VertexNames.Spades and merging. 
