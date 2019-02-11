@@ -726,16 +726,6 @@ VertexNames.Spades <- function(D, V){
   return(DataF)
 }
 
-
-RTFCorrection2 <- function(p, tmm, smm, d) {
-  resel_count <- tmm/(smm^d) 
-  z <- as.array(p)
-  z <- abs(qnorm(z))
-  Answer <- (resel_count * (4 * log(2)) * ((2*pi)**(-3./2)) * z) * exp((z ** 2)*(-0.5))
-  Truth <- ifelse(Answer >= .05, 0, 1)
-  knowledge <- c(Answer, Truth)
-  return(knowledge)}
-
 AceOfHeartsAE.parallel <- function(D, ZYG, MZ, DZ){
   #length(unique(twi2$family))
   column_names <- colnames(D)
