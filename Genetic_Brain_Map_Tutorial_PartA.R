@@ -104,7 +104,7 @@ AceOfSpades.vertex <- function(D, V, ZYG, MZ, DZ) {
     Var2[i] <- V
     selDVs = c(Epic1[i], V) 
     #selDVs = c("anti", "Num")
-    a <- withWarnings(m1 <- umxModify(m2 <- umxACE(selDVs = selDVs, dzData = dzData, mzData = mzData, suffix =""), update = c("c_r2c2", "c_r2c1")))
+    a <- withWarnings(m1 <- umxModify(m2 <- umxACE(selDVs = selDVs, dzData = dzData, mzData = mzData, sep =""), update = c("c_r2c2", "c_r2c1")))
     ModifiedA <- umxModify(m1, update="a_r2c1")
     m3 <- mxCompare(m1, ModifiedA)
     ModifiedE <- umxModify(m1, update="e_r2c1")
