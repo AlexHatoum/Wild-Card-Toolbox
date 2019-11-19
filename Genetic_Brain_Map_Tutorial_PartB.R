@@ -1,5 +1,5 @@
 #After running the map, you may have your own pipeline for munging the vertexwise results into something that can be plotted.  If so, you can skip the 
-#the rest of the tutorials and move to that.  
+#the rest of the tutorials and move to that.  This script converts the RData into a text file that python can read. 
 
 #For this script: When the brain is crushed in preprocessing, it can produce estimates that are not fit for the structural modeling 
 #procedure.  This script will enter those vertices as missing.
