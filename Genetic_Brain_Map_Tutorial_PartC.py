@@ -1,5 +1,5 @@
 #Hello World (Programming humor!), Anyway, yes this is a python script.  It takes an R script, a Python Script and Matlab script to actually 
-#Plot these estimates back in Freesurfer. 
+#Plot these estimates back in Freesurfer, but I will make them easy to follow, promise. 
 
 ##below I will use the ***** again to Show you what you need to change explicitly.   If something goes wrong, it will output a files with nothing in them, just so you know.
 
