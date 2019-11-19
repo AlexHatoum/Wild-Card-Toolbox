@@ -152,15 +152,16 @@ AceOfSpades.vertex <- function(D, V, ZYG, MZ, DZ) {
   return(Answers)
 }
 
-#AceOfSpades.vertex is for running vertexwise data.  Because some data includes all zero's due to brain crushing or concerns to SNR,
+#AceOfSpades.vertex is for running vertexwise data.  Because some data includes all zero's due to brain crushing,
 #this function first checks to see if data is of high enough quality for a twin model before running the associatoin at each vertex. 
-#With high quality data, almost all the vertices will pass this test. 
+#With high quality data or lower resolution parcellations, all the vertices will pass this test. I recommend fsaverage5 space, as that
+#one always recovers all vertices in my tests. 
 
 #****Now! Let's actually run the map.  For the function below, the first argument is your twin file, second is the name of the behavior you are mapping sans the "1" or "2" subscript, third argument
 #is the name of your zygosity variable, 4th is the MZ coding and 5th is DZ coding. I recommend 1 and 2 for that to ensure no errors occur. 
 AnalysesOut <- AceOfSpades.vertex(Analysis, "Behavior", "Zyg", 1, 2)
 
-#Cool, write it out, and I will cover converting it back into free surfer in the other tutorial.  Scripts.
+#Cool, write it out, and I will cover converting it back into free surfer in the other tutorial scripts.
 save(AnalysesOut , file="AnalysesOut.Rdata")
 
 
