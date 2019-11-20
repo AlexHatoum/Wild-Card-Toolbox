@@ -126,7 +126,7 @@ AceOfDiamonds.parallel <- function(D, V, ZYG, MZ, DZ) {
     selDVs = c(Epic1[i])
     SelDfs = c(V)
     #selDVs = c("anti", "Num")
-    a <- withWarnings(m1 <- umxGxE(selDVs = selDVs, selDefs=SelDfs, dzData = dzData, mzData = mzData, suffix ="", dropMissing=TRUE))
+    a <- withWarnings(m1 <- umxGxE(selDVs = selDVs, selDefs=SelDfs, dzData = dzData, mzData = mzData, sep ="", dropMissing=TRUE))
     #initial path
     list("Var1" = Var1[i], "Var2" = Var2[i], "AMain" = Path1A[i] <-  m1$output$estimate[1],
          #cross path
@@ -281,7 +281,7 @@ AceOfSpades.parallel <- function(D, V, ZYG, MZ, DZ) {
     Var2[i] <- V
     selDVs = c(Epic1[i], V) 
     #selDVs = c("anti", "Num")
-    a <- withWarnings(m1 <- umxACE(selDVs = selDVs, dzData = dzData, mzData = mzData, suffix =""))
+    a <- withWarnings(m1 <- umxACE(selDVs = selDVs, dzData = dzData, mzData = mzData, sep =""))
     m2 <- umxModify(m1, update="a_r2c1")
     m3 <- umxCompare(m1, m2)
     m3$p[2]
@@ -377,7 +377,7 @@ AceOfSpadesAE.parallel <- function(D, V, ZYG, MZ, DZ) {
     Var2[i] <- V
     selDVs = c(Epic1[i], V) 
     #selDVs = c("anti", "Num")
-    a <- withWarnings(m1 <- umxACE(selDVs = selDVs, dzData = dzData, mzData = mzData, suffix =""))
+    a <- withWarnings(m1 <- umxACE(selDVs = selDVs, dzData = dzData, mzData = mzData, sep =""))
     Moded <- umxModify(m1, update = c("c_r1c1", "c_r2c1", "c_r2c2"))
     m2 <- umxModify(Moded, update="a_r2c1")
     m3 <- umxCompare(Moded, m2)
@@ -475,7 +475,7 @@ AceOfSpadesA.parallel <- function(D, V, ZYG, MZ, DZ) {
     Var2[i] <- V
     selDVs = c(Epic1[i], V) 
     #selDVs = c("anti", "Num")
-    a <- withWarnings(m1 <- umxACE(selDVs = selDVs, dzData = dzData, mzData = mzData, suffix =""))
+    a <- withWarnings(m1 <- umxACE(selDVs = selDVs, dzData = dzData, mzData = mzData, sep =""))
     Moded <- umxModify(m1, update = c("c_r1c1", "c_r2c1", "c_r2c2", "e_r2c1"))
     m2 <- umxModify(Moded, update="a_r2c1")
     m3 <- umxCompare(Moded, m2)
@@ -635,7 +635,7 @@ AceOfSpades.Vertex.v2 <- function(D, V, ZYG, MZ, DZ){
       Var2[i] <- V
       selDVs = c(Epic1[i], V) 
       #selDVs = c("anti", "Num")
-      a <- withWarnings(m1 <- umxACE(selDVs = selDVs, dzData = dzData, mzData = mzData, suffix =""))
+      a <- withWarnings(m1 <- umxACE(selDVs = selDVs, dzData = dzData, mzData = mzData, sep =""))
       #initial path
       list("Var1" = Var1[i], "Var2" = Var2[i], "Path1A" = Path1A[i] <-  m1$output$algebras$top.a_std[1],
            #cross path
@@ -854,7 +854,7 @@ AceOfHeartsAll.parallel <- function(D, ZYG, MZ, DZ){
       val <- withCallingHandlers(expr, warning = wHandler)
       list(value = val, warnings = myWarnings)
     } 
-    a <-  withWarnings(m1 <-umxACE(selDVs = selDVs, dzData = dzData, mzData = mzData, suffix=""))
+    a <-  withWarnings(m1 <-umxACE(selDVs = selDVs, dzData = dzData, mzData = mzData, sep=""))
     AE <- umxModify(m1, update = c("c_r1c1"))
     CE <- umxModify(m1, update = c("a_r1c1"))
     Eonly <- umxModify(AE, update = c("a_r1c1"))
@@ -954,7 +954,7 @@ AceOfSpades.vertex <- function(D, V, ZYG, MZ, DZ) {
       Var2[i] <- V
       selDVs = c(Epic1[i], V) 
       #selDVs = c("anti", "Num")
-      a <- withWarnings(m1 <- umxModify(m2 <- umxACE(selDVs = selDVs, dzData = dzData, mzData = mzData, suffix =""), update = c("c_r2c2", "c_r2c1")))
+      a <- withWarnings(m1 <- umxModify(m2 <- umxACE(selDVs = selDVs, dzData = dzData, mzData = mzData, sep =""), update = c("c_r2c2", "c_r2c1")))
       Modified <- umxModify(m1, update="a_r2c1")
       m3 <- mxCompare(m1, Modified)
       #initial path
