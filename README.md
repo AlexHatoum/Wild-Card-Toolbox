@@ -16,3 +16,5 @@ Part C: Organizes data from R into data that is aligned with MNI coordinates
 Part D: Takes results from part C and creates .mgh freesurfer files that can be plotted in Freeview and manipulated by freesurfer commands
 
 Each Part has a single corresponding script and that script is annotated to demonstrate the process. Looking at the comments will explain explicity what parts of the script you would need to add your own data or change the line. 
+
+The script largely uses base R. Please use R version 3.0 or < and the latest installation of OpenMx and umx packages from CRAN. Please do not use the developer version of OpenMx on github. 
